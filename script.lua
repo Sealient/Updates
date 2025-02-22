@@ -226,14 +226,22 @@ end
 
 local TweenService = game:GetService("TweenService")
 
+-- Create a ScreenGui and a TextLabel for displaying the version
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+local versionLabel = Instance.new("TextLabel")
+versionLabel.Parent = screenGui
+versionLabel.Size = UDim2.new(0, 200, 0, 30)  -- Adjust the size of the label
+versionLabel.Position = UDim2.new(0.05, 0, 0, 0)  -- Position it at top left corner
+versionLabel.BackgroundTransparency = 1  -- Make background transparent
+versionLabel.TextColor3 = Color3.fromRGB(255, 0, 255)  -- Set the text color (hot pink)
+versionLabel.TextSize = 14  -- Smaller text size
+versionLabel.Text = "Sealient Hub - Version: 1.0"  -- Initial version text
+versionLabel.TextXAlignment = Enum.TextXAlignment.Right  -- Align text to the right
+
 -- Function to create a temporary message on the screen
 local function showUpdateMessage(message)
-    local screenGui = game.Players.LocalPlayer:WaitForChild("PlayerGui"):FindFirstChildOfClass("ScreenGui")
-    if not screenGui then
-        screenGui = Instance.new("ScreenGui")
-        screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-    end
-
     -- Create a TextLabel to show the update message
     local updateLabel = Instance.new("TextLabel")
     updateLabel.Text = message
@@ -262,6 +270,7 @@ local function showUpdateMessage(message)
     end)
 end
 
+
 local function CheckForUpdates()
     local versionUrl = "https://raw.githubusercontent.com/Sealient/Updates/refs/heads/main/version.txt"
     local scriptUrl = "https://raw.githubusercontent.com/Sealient/Updates/refs/heads/main/script.lua"
@@ -280,7 +289,7 @@ local function CheckForUpdates()
     latestVersion = latestVersion:match("^%s*(.-)%s*$")
 
     -- Your current version
-    local currentVersion = "1.1"  -- Update to your actual current version
+    local currentVersion = versionLabel.Text:match("Version: (%d+%.%d+)")  -- Extract the current version from the label
 
     if latestVersion ~= currentVersion then
         showUpdateMessage("🛠️ New version available: " .. latestVersion)
@@ -315,8 +324,11 @@ local function CheckForUpdates()
                 showUpdateMessage("Error executing the update script: " .. errorMsg)
             else
                 showUpdateMessage("Successfully updated to version " .. latestVersion)
-                -- Toggle the UI after the script update
+                -- Update the version text on the label after successful update
+                versionLabel.Text = "Sealient Hub - Version: " .. latestVersion
+                -- Toggle the UI after the script update and remove version label
                 UI:toggle()
+                versionLabel:Destroy()  -- Remove the version text label after UI toggle
             end
         else
             showUpdateMessage("Failed to compile the script: " .. (loadError or "Unknown error"))
@@ -326,20 +338,6 @@ local function CheckForUpdates()
         return false, currentVersion, nil
     end
 end
-
--- Create a ScreenGui and a TextLabel for displaying the version
-local screenGui = Instance.new("ScreenGui")
-screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-
-local versionLabel = Instance.new("TextLabel")
-versionLabel.Parent = screenGui
-versionLabel.Size = UDim2.new(0, 200, 0, 30)  -- Adjust the size of the label
-versionLabel.Position = UDim2.new(0.05, 0, 0, 0)  -- Position it at top right corner
-versionLabel.BackgroundTransparency = 1  -- Make background transparent
-versionLabel.TextColor3 = Color3.fromRGB(255, 0, 255)  -- Set the text color (hot pink)
-versionLabel.TextSize = 14  -- Smaller text size
-versionLabel.Text = "Sealient Hub - Version: 1.0"  -- Display the current version here
-versionLabel.TextXAlignment = Enum.TextXAlignment.Right  -- Align text to the right
 
 RecoverySection:addButton({
     title = "Check for Script Update",
