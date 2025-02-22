@@ -1,4 +1,4 @@
-﻿-- // Initialising the UI
+-- // Initialising the UI
 local Venyx = loadstring(game:HttpGet("https://raw.githubusercontent.com/Stefanuk12/Venyx-UI-Library/main/source2.lua"))()
 local UI = Venyx.new({
     title = "Sealient Cove"
@@ -219,43 +219,110 @@ RecoverySection:addKeybind({
     end
 })
 
+local function RemoveBOM(str)
+    -- Remove the BOM character (U+FEFF) if it's present at the beginning of the string
+    return str:gsub("^\239\187\191", "")
+end
+
+local TweenService = game:GetService("TweenService")
+
+-- Function to create a temporary message on the screen
+local function showUpdateMessage(message)
+    local screenGui = game.Players.LocalPlayer:WaitForChild("PlayerGui"):FindFirstChildOfClass("ScreenGui")
+    if not screenGui then
+        screenGui = Instance.new("ScreenGui")
+        screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    end
+
+    -- Create a TextLabel to show the update message
+    local updateLabel = Instance.new("TextLabel")
+    updateLabel.Text = message
+    updateLabel.Font = Enum.Font.GothamBold
+    updateLabel.TextSize = 18
+    updateLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    updateLabel.BackgroundTransparency = 1
+    updateLabel.Size = UDim2.new(0, 400, 0, 50)
+    updateLabel.Position = UDim2.new(0.5, -200, 0.1, 0)  -- Position it at the top-center of the screen
+    updateLabel.Parent = screenGui
+
+    -- Create a Tween for the transparency
+    local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local goal = {TextTransparency = 1}  -- Target transparency
+    local tween = TweenService:Create(updateLabel, tweenInfo, goal)
+
+    -- Wait for 5 seconds before starting the fade
+    wait(5)
+
+    -- Start the fade out tween
+    tween:Play()
+
+    -- Remove the label after it fades out
+    tween.Completed:Connect(function()
+        updateLabel:Destroy()
+    end)
+end
+
 local function CheckForUpdates()
     local versionUrl = "https://raw.githubusercontent.com/Sealient/Updates/refs/heads/main/version.txt"
     local scriptUrl = "https://raw.githubusercontent.com/Sealient/Updates/refs/heads/main/script.lua"
-    
+
     -- Get the latest version from the version file
     local latestVersionSuccess, latestVersion = pcall(function()
         return game:HttpGet(versionUrl)
     end)
-    
+
     if not latestVersionSuccess then
-        warn("Failed to fetch the version file!")
+        showUpdateMessage("Failed to fetch the version file!")
         return false, nil, nil
     end
 
-    -- Trim leading and trailing whitespaces
+    -- Trim leading and trailing whitespaces from the version
     latestVersion = latestVersion:match("^%s*(.-)%s*$")
-    
+
     -- Your current version
-    local currentVersion = "1.0"  -- Change this to your current version
+    local currentVersion = "1.0"  -- Update to your actual current version
 
     if latestVersion ~= currentVersion then
-        print("🛠️ New version available: " .. latestVersion)
-        
+        showUpdateMessage("🛠️ New version available: " .. latestVersion)
+
         -- Get the script content from the new script file
         local scriptSuccess, newScript = pcall(function()
             return game:HttpGet(scriptUrl)
         end)
 
         if not scriptSuccess then
-            warn("Failed to fetch the script content!")
+            showUpdateMessage("Failed to fetch the script content!")
             return false, latestVersion, nil
         end
-        
-        -- Return the latest version and the new script content
-        return true, latestVersion, newScript
+
+        -- Remove BOM if present
+        newScript = RemoveBOM(newScript)
+
+        -- Check if script content is valid
+        if not newScript or newScript == "" then
+            showUpdateMessage("Script content is empty or invalid!")
+            return false, latestVersion, nil
+        end
+
+        -- Compile and execute the new script
+        local func, loadError = loadstring(newScript)
+        if func then
+            local success, errorMsg = pcall(function()
+                func()  -- Run the fetched Lua code
+            end)
+
+            if not success then
+                showUpdateMessage("Error executing the update script: " .. errorMsg)
+            else
+                showUpdateMessage("Successfully updated to version " .. latestVersion)
+                -- Toggle the UI after the script update
+                UI:toggle()
+            end
+        else
+            showUpdateMessage("Failed to compile the script: " .. (loadError or "Unknown error"))
+        end
     else
-        print("✅ You're on the latest version!")
+        showUpdateMessage("You're on the latest version (" .. latestVersion .. ").")
         return false, currentVersion, nil
     end
 end
@@ -277,26 +344,7 @@ versionLabel.TextXAlignment = Enum.TextXAlignment.Right  -- Align text to the ri
 RecoverySection:addButton({
     title = "Check for Script Update",
     callback = function()
-        local updateAvailable, latestVersion, newScript = CheckForUpdates()
-
-        if updateAvailable then
-            print("🔄 Updating to version " .. latestVersion)
-            
-            if newScript then
-                -- Execute the new script using loadstring
-                local success, errorMsg = pcall(function()
-                    loadstring(newScript)()
-                end)
-                
-                if not success then
-                    warn("Error during script update: " .. errorMsg)
-                else
-                    print("Successfully updated to version " .. latestVersion)
-                end
-            end
-        else
-            print("You are on the latest version (" .. latestVersion .. ").")
-        end
+        CheckForUpdates()
     end
 })
 
