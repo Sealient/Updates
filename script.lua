@@ -280,7 +280,7 @@ local function CheckForUpdates()
     latestVersion = latestVersion:match("^%s*(.-)%s*$")
 
     -- Your current version
-    local currentVersion = "1.0"  -- Update to your actual current version
+    local currentVersion = "1.1"  -- Update to your actual current version
 
     if latestVersion ~= currentVersion then
         showUpdateMessage("🛠️ New version available: " .. latestVersion)
