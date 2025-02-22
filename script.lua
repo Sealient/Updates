@@ -437,7 +437,7 @@ versionLabel.Position = UDim2.new(0.05, 0, 0, 0)  -- Position it at top left cor
 versionLabel.BackgroundTransparency = 1  -- Make background transparent
 versionLabel.TextColor3 = Color3.fromRGB(255, 0, 255)  -- Set the text color (hot pink)
 versionLabel.TextSize = 14  -- Smaller text size
-versionLabel.Text = "Sealient Hub - Version: 1.0"  -- Initial version text
+versionLabel.Text = "Sealient Hub - Version: 1.1"  -- Initial version text
 versionLabel.TextXAlignment = Enum.TextXAlignment.Right  -- Align text to the right
 
 -- Function to create a temporary message on the screen
